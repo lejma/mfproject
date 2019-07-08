@@ -18,15 +18,16 @@ public class MyClass {
 		System.setProperty("webdriver.gecko.driver", "C:\\Selenium\\geckodriver.exe");
 		}
 
-	final static WebDriver driver = new FirefoxDriver();
-	final static int waitTimeValueInSeconds = 5; // general timeout in seconds
-	final static WebDriverWait wait = new WebDriverWait(driver, waitTimeValueInSeconds);
+	// TODO following lines would be better to be somehow general for whole class / test set
+	//final static WebDriver driver = new FirefoxDriver();
+	//final static int waitTimeValueInSeconds = 5; // general timeout in seconds
+	//final static WebDriverWait wait = new WebDriverWait(driver, waitTimeValueInSeconds);
     
 	public static void main(String[] args) {
     	System.out.println("INFO: lets roll out this test set");
     	
-    	//testSubcategoryNames();
-    	shoppingSmoke();
+    	testSubcategoryNames();
+    	testMenuNames();
 
     }
     
@@ -51,6 +52,9 @@ public class MyClass {
 		*/
 		
 		// test data, the Key is name of the category, the values are the subcategory names in the category page
+		WebDriver driver = new FirefoxDriver();
+		int waitTimeValueInSeconds = 5; // general timeout in seconds
+		WebDriverWait wait = new WebDriverWait(driver, waitTimeValueInSeconds);
 		Map <String, List<String>> mapOfCategories = new HashMap<>();
 		mapOfCategories.put("Komponenty", new ArrayList<>(Arrays.asList(
 				"Intel Optane", "Procesory", "GrafickÈ karty", "Disky", "PamÏti", "Z·kladnÌ desky",
@@ -58,10 +62,11 @@ public class MyClass {
 				"ZvukovÈ karty", "SÌùovÈ karty", "ÿadiËe a adaptÈry", "ProgramovatelnÈ stavebnice",
 				"Tuning PC", "Z·znamov· za¯ÌzenÌ", "Kabely a konektory", "PC na mÌru", "Mining", 
 				"Jak sestavit PC", "ProË nakupovat u n·s", "HW novinky a recenze")));
-		mapOfCategories.put("Notebooky", new ArrayList<>(Arrays.asList("Notebooky za vysvÏdËenÌ", "BÏûnÈ uûitÌ", "HernÌ", "this is not there")));
-			
+		//mapOfCategories.put("Notebooky", new ArrayList<>(Arrays.asList("Notebooky za vysvÏdËenÌ", "BÏûnÈ uûitÌ", "HernÌ", "this is not there")));
+		int errorState = 0;
+		
 		try {
-			
+			System.out.println("INFO: Test testSubcategoryNames started!");
 			for (String category : mapOfCategories.keySet())  {
 				driver.get("https://www.alza.cz/");
 				wait.until(ExpectedConditions.titleIs("Alza.cz - nejvÏtöÌ obchod s poËÌtaËi a elektronikou | Alza.cz"));
@@ -86,6 +91,16 @@ public class MyClass {
 				List<String> foundSubcategoriesOnPage = new ArrayList<>(); 
 				Integer amountOfFoundSubcategories = listOfSubcategoriesOnPage.size()-1; // seems like there is always +1 extra empty
 
+				// check the amounts
+				if (amountOfTestedSubcategories.equals(amountOfFoundSubcategories)) {
+					System.out.println("INFO: amount of tested equals amount found [" + amountOfFoundSubcategories + "].");
+
+				} else {
+					driver.close();
+					throw new Exception("ERROR: amounts differ! Tested for [" + amountOfTestedSubcategories + "], but found: [" + amountOfFoundSubcategories + "]");
+					// could be a screenshot taken here
+				}
+				
 				// gather the text value from "subcategory" web elements on the category page 
 				for ( WebElement subcategoryOnPage : listOfSubcategoriesOnPage)  {
 					foundSubcategoriesOnPage.add(subcategoryOnPage.getText());
@@ -94,58 +109,102 @@ public class MyClass {
 				// checks if specified category name from test list is on the actual category page 
 				for (String subcategoryTextFromTest : mapOfCategories.get(category)) {
 					if (foundSubcategoriesOnPage.contains(subcategoryTextFromTest)) {
-						System.out.println("INFO: [" + subcategoryTextFromTest + "] subcategory is in the category list on the [" + category + "] page");
+						System.out.println("INFO: [" + subcategoryTextFromTest + "] subcategory is in the subcategory list on the [" + category + "] page");
 
 					} else {
-						System.out.println("ERROR: [" + subcategoryTextFromTest + "] is in NOT in the category list on the [" + category + "] page!");
-						// intentionally not throwing anything, there may be more issues
+						System.out.println("ERROR: [" + subcategoryTextFromTest + "] is in NOT in the subcategory list on the [" + category + "] page!");
+						errorState = 1;
 					}
 
 				}
-				// check the amounts
-				if (amountOfTestedSubcategories.equals(amountOfFoundSubcategories)) {
-					System.out.println("INFO: amount of tested equals amount found [" + amountOfFoundSubcategories + "].");
 
+				
+				driver.close();
+				
+				if (errorState != 0) {
+					throw new Exception("ERROR: Test testSubcategoryNames failed!");
 				} else {
-					throw new Exception("ERROR: amounts differ! Tested for [" + amountOfTestedSubcategories + "], but found: [" + amountOfFoundSubcategories + "]");
-
+					System.out.println("INFO: Test testSubcategoryNames passed!");
 				}
-
-
 
 			}
 		} catch (Exception e) {
-			System.out.println("ERROR: Horrible failure!");
+			System.out.println("ERROR: Horrible failure in testSubcategoryNames!");
 			e.printStackTrace();
 		}
     	  	
     }
     
-    public static void shoppingSmoke() {
-		driver.get("https://www.alza.cz/");
-		wait.until(ExpectedConditions.titleIs("Alza.cz - nejvÏtöÌ obchod s poËÌtaËi a elektronikou | Alza.cz"));
-		wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("fmenu")));
-		WebElement mainMenu = driver.findElement(By.className("fmenu"));
-		List<WebElement> menuCategories = mainMenu.findElements(By.className("bx"));
-		//System.out.println(menuCategories.size());
-		Random randomIndex = new Random();
-		//String randomMenuSelected = menuCategories.get(randomIndex.nextInt(menuCategories.size())).findElement(By.tagName("a")).getAttribute("title");
-		//System.out.println(menuCategories.get(randomIndex.nextInt(menuCategories.size())).findElement(By.tagName("a")).getAttribute("title"));
-		// category Premium Deals, T¯etinka, Pro ökoly a st·t does not work for this, they are not normal goods categories
-		menuCategories.get(randomIndex.nextInt(menuCategories.size())).findElement(By.tagName("a")).click();
-		wait.until(ExpectedConditions.visibilityOfElementLocated(By.tagName(("h1"))));	
-		System.out.println(driver.findElement(By.tagName("h1")).getText());
-		
-		
-		
-		
-		for (WebElement menuCategory : menuCategories) {
-			//System.out.println(menuCategory.findElement(By.tagName("a")).getAttribute("title"));
+    public static void testMenuNames() {
+    	
+		/* testMenuNames
+		this test is supposed to check main menu for Categories, 
+		verify names as well as their count and order
+		for manual verification: 
+		1. open browser and navigate to https://www.alza.cz/ - page should load correctly
+		2. verify left menu appears - should be present on the page
+		3. verify the amount of elements - should be 21
+		4. verify the list of presented categories 
+			4a. there should be list of the following, in order:
+			"Masakr cen", "Smart", "MobilnÌ telefony", "ChytrÈ hodinky",
+			"Notebooky", "PoËÌtaËe a Software", "P¯ÌsluöenstvÌ", "Komponenty", "HernÌ zÛna", "Televize", "Foto Audio Video", 
+			"VelkÈ spot¯ebiËe", "Dom·cnost", "Kr·sa a zdravÌ", "Tisk·rny a kancel·¯", "Elektromobilita", "Hobby, sport a dalöÌ",
+			"Slevy, bazar", "T¯etinka", "Premium Deals", "Pro ökoly a st·t"
+	*/
+    	
+		WebDriver driver = new FirefoxDriver();
+		int waitTimeValueInSeconds = 5; // general timeout in seconds
+		WebDriverWait wait = new WebDriverWait(driver, waitTimeValueInSeconds);
+    	List<String> menuCategoryTestNames = new ArrayList<>(Arrays.asList("Masakr cen", "Smart", "MobilnÌ telefony", "ChytrÈ hodinky",
+				"Notebooky", "PoËÌtaËe a Software", "P¯ÌsluöenstvÌ", "Komponenty", "HernÌ zÛna", "Televize", "Foto Audio Video", 
+				"VelkÈ spot¯ebiËe", "Dom·cnost", "Kr·sa a zdravÌ", "Tisk·rny a kancel·¯", "Elektromobilita", "Hobby, sport a dalöÌ",
+				"Slevy, bazar", "T¯etinka", "Premium Deals", "Pro ökoly a st·t"));
+    	int errorState = 0;
+    	
+		try {
+			System.out.println("INFO: Test testMenuNames started!");
+			driver.get("https://www.alza.cz/");
+			wait.until(ExpectedConditions.titleIs("Alza.cz - nejvÏtöÌ obchod s poËÌtaËi a elektronikou | Alza.cz"));
+			wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("fmenu")));
+			WebElement mainMenu = driver.findElement(By.className("fmenu"));
+			List<WebElement> menuCategoriesFromWeb = mainMenu.findElements(By.className("bx"));
+			
+			if (menuCategoryTestNames.size() == menuCategoriesFromWeb.size()) {
+				System.out.println("INFO: number of menu-elements on the web matches the number of tested (" + menuCategoryTestNames.size() + ")");
+			} else {
+				driver.close();
+				throw new Exception("ERROR: amounts differ, tested for (" + menuCategoryTestNames.size() + ") but found (" + menuCategoriesFromWeb.size() + ")");
+			}
+			
+			int index = 0;
+			for (WebElement menuCategoryFromWeb : menuCategoriesFromWeb) {
+				
+				if (menuCategoryFromWeb.findElement(By.tagName("a")).getAttribute("title").equals(menuCategoryTestNames.get(index))) {
+					System.out.println("INFO: this menu is the same - index [" + index + "], " + menuCategoryFromWeb.findElement(By.tagName("a")).getAttribute("title") + " " + menuCategoryTestNames.get(index));
+				} else {
+					System.out.println("ERROR: this menu differs - index [" + index + "], expected [" + menuCategoryFromWeb.findElement(By.tagName("a")).getAttribute("title") + "] but found [" + menuCategoryTestNames.get(index) + "]");
+					errorState = 1;
+				}
+				index++;
+			}
+			
+			driver.close();
+			
+			if (errorState != 0) {
+				throw new Exception("ERROR: Test testMenuNames failed!");
+			} else {
+				System.out.println("INFO: Test testMenuNames passed!");
+			}
+			
+		} catch (Exception e) {
+			System.out.println("ERROR: Horrible failure in testMenuNames!");
+			e.printStackTrace();
 		}
-		driver.close();
     }
-    public static void testSorting() {
-    	    	  	
+    
+    
+    public static void test() {
+		
     }
 /*
 
