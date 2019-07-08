@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -24,16 +23,18 @@ public class MyClass {
 	//final static WebDriverWait wait = new WebDriverWait(driver, waitTimeValueInSeconds);
     
 	public static void main(String[] args) {
-    	System.out.println("INFO: lets roll out this test set");
+    	System.out.println("INFO: lets roll out this MyClass test set");
     	
-    	testSubcategoryNames();
-    	testMenuNames();
-
+    	testVerifySubcategoryNames();
+    	testVerifyMenuNames();
+    	testVerifyCorrectItemWasInBasket();
+    	
+    	System.out.println("INFO: MyClass test set has ended");
     }
     
 
 
-	public static void testSubcategoryNames() {
+	public static void testVerifySubcategoryNames() {
 		/* testSubcategoryNames
 			this test is supposed to check provided Category from main menu, open it 
 			and verify there is predefined list of subcategories listed:
@@ -63,10 +64,11 @@ public class MyClass {
 				"Tuning PC", "Záznamová zaøízení", "Kabely a konektory", "PC na míru", "Mining", 
 				"Jak sestavit PC", "Proè nakupovat u nás", "HW novinky a recenze")));
 		//mapOfCategories.put("Notebooky", new ArrayList<>(Arrays.asList("Notebooky za vysvìdèení", "Bìžné užití", "Herní", "this is not there")));
+		// works for any Category (except last three, they are not regular goods categories)
 		int errorState = 0;
 		
 		try {
-			System.out.println("INFO: Test testSubcategoryNames started!");
+			System.out.println("INFO: Test testVerifySubcategoryNames started!");
 			for (String category : mapOfCategories.keySet())  {
 				driver.get("https://www.alza.cz/");
 				wait.until(ExpectedConditions.titleIs("Alza.cz - nejvìtší obchod s poèítaèi a elektronikou | Alza.cz"));
@@ -122,20 +124,20 @@ public class MyClass {
 				driver.close();
 				
 				if (errorState != 0) {
-					throw new Exception("ERROR: Test testSubcategoryNames failed!");
+					throw new Exception("ERROR: Test testVerifySubcategoryNames failed!");
 				} else {
-					System.out.println("INFO: Test testSubcategoryNames passed!");
+					System.out.println("INFO: Test testVerifySubcategoryNames passed!");
 				}
 
 			}
 		} catch (Exception e) {
-			System.out.println("ERROR: Horrible failure in testSubcategoryNames!");
+			System.out.println("ERROR: Horrible failure in testVerifySubcategoryNames!");
 			e.printStackTrace();
 		}
     	  	
     }
     
-    public static void testMenuNames() {
+    public static void testVerifyMenuNames() {
     	
 		/* testMenuNames
 		this test is supposed to check main menu for Categories, 
@@ -162,7 +164,7 @@ public class MyClass {
     	int errorState = 0;
     	
 		try {
-			System.out.println("INFO: Test testMenuNames started!");
+			System.out.println("INFO: Test testVerifyMenuNames started!");
 			driver.get("https://www.alza.cz/");
 			wait.until(ExpectedConditions.titleIs("Alza.cz - nejvìtší obchod s poèítaèi a elektronikou | Alza.cz"));
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("fmenu")));
@@ -191,25 +193,76 @@ public class MyClass {
 			driver.close();
 			
 			if (errorState != 0) {
-				throw new Exception("ERROR: Test testMenuNames failed!");
+				throw new Exception("ERROR: Test testVerifyMenuNames failed!");
 			} else {
-				System.out.println("INFO: Test testMenuNames passed!");
+				System.out.println("INFO: Test testVerifyMenuNames passed!");
 			}
 			
 		} catch (Exception e) {
-			System.out.println("ERROR: Horrible failure in testMenuNames!");
+			System.out.println("ERROR: Horrible failure in testVerifyMenuNames!");
 			e.printStackTrace();
 		}
     }
     
     
-    public static void test() {
+    public static void testVerifyCorrectItemWasInBasket() {
+		WebDriver driver = new FirefoxDriver();
+		int waitTimeValueInSeconds = 5; // general timeout in seconds
+		WebDriverWait wait = new WebDriverWait(driver, waitTimeValueInSeconds);
 		
+		try {
+			System.out.println("INFO: Test testVerifyCorrectItemWasInBasket started!");
+			driver.get("https://www.alza.cz/");
+			wait.until(ExpectedConditions.titleIs("Alza.cz - nejvìtší obchod s poèítaèi a elektronikou | Alza.cz"));
+			//wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("fmenu")));
+			
+			List<WebElement> items = driver.findElements(By.className("item"));
+			// was about to pick random item, but then decided to rather pick first visible item (further below), its easier
+			// due to many horizontally-scrolled panels there is about 45 products, but not all "on screen"
+			//System.out.println("amount of items" + items.size());
+			//int randomItemIndex = new Random().nextInt(items.size());
+			//WebElement randomItem = items.get(randomItemIndex);
+			//System.out.println(randomItem.findElement(By.className("name")).getAttribute("innerHTML"));
+			//randomItem.click();
+			String itemTitle = null;
+			
+			// following just picks first 
+			for (WebElement item : items) {
+				if (item.isDisplayed()) {
+					//itemTitle = item.findElement(By.className("name")).getAttribute("innerHTML");
+					itemTitle = item.findElement(By.className("name")).getAttribute("innerHTML");
+					System.out.println("INFO: The title of a chosen item is [" + itemTitle + "]");
+					item.click();
+					break;
+				}
+			}
+			wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.xpath("//a[contains(@class,'btnx normal green buy')]"))));
+			driver.findElement(By.xpath("//a[contains(@class,'btnx normal green buy')]")).click();
+			
+			wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.linkText("Zboží bylo pøidáno do košíku"))));
+			driver.findElement(By.linkText("Zboží bylo pøidáno do košíku")).click();
+			
+			wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("orderpage"))));
+			driver.findElement(By.className("mainItem")).click();
+			
+			wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.xpath("//a[contains(@class,'btnx normal green buy')]"))));
+			
+			String itemTitleFromBasket = driver.findElement(By.tagName("h1")).getText();
+			
+			if (itemTitle.equals(itemTitleFromBasket)) {
+				System.out.println("INFO: Item in the basket was the same as the one ordered.");
+				System.out.println("INFO: testVerifyCorrectItemWasInBasket passed!");
+			} else {
+				System.out.println("ERROR: incorrect item was in the basket, expected [" + itemTitle + "], but found [" + itemTitleFromBasket + "]!");
+				throw new Exception("ERROR: testVerifyCorrectItemWasInBasket failed!");
+			}
+
+			driver.close();
+			
+		} catch (Exception e) {
+			System.out.println("ERROR: Horrible failure in testVerifyCorrectItemWasInBasket!");
+			e.printStackTrace();
+		}
     }
-/*
-
-*/
-
-
     
 }
