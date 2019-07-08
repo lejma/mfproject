@@ -206,6 +206,18 @@ public class MyClass {
     
     
     public static void testVerifyCorrectItemWasInBasket() {
+		/* testVerifyCorrectItemWasInBasket
+		this test is supposed to check whether a randomly selected item placed into a shopping cart
+		is the same item referenced in the cart itself
+		for manual verification: 
+		1. open browser and navigate to https://www.alza.cz/ - page should load correctly
+		2. verify there are items to buy right on the main page
+		3. select any item and memorize it
+		4. click KOUPIT button - there should be a confirmation page with "zboží bylo pøidáno do košíku" hyperlink
+		5. click the hyperlink mentioned above - user should be redirected into the shopping cart
+		6. verify the shopping cart contains a list with one and only item - the item from point 3
+		7. click on the item in the list and verify the hyperlink leads to the same item it is referencing to
+	*/
 		WebDriver driver = new FirefoxDriver();
 		int waitTimeValueInSeconds = 5; // general timeout in seconds
 		WebDriverWait wait = new WebDriverWait(driver, waitTimeValueInSeconds);
@@ -263,6 +275,31 @@ public class MyClass {
 			System.out.println("ERROR: Horrible failure in testVerifyCorrectItemWasInBasket!");
 			e.printStackTrace();
 		}
+    }
+    
+    public static void potential4thTest() {
+    	/* verify "doprava zdarma" is granted when the total price of goods in shopping cart is 2000 czk or above
+		
+		1. observe empty cart - there should be no doprava zdarma (NDZ)
+		2. put 1 item with price of more than 2000 czk into the cart - there should be doprava zdarma (DZ)
+		3. starting with empty cart, put goods into the cart with total cost of 1999 czk - there should be NDZ
+		4. starting with cart from previous step, put one item with 1 czk price, total should be 2000 czk - there should be DZ
+		5. starting with cart from previous step, remove item worth 1999 (remaining 1 czk item) - there should be NDZ
+	*/
+    }
+    
+    public static void potential5thTest() {
+    	/* verify that if users selects "Kurýr po Praze" as a type of shipping the order cannot be finished when 
+    	 * address filled in further in the process does not reside in Prague city
+		1. proceed through normal shopping workflow to the Doprava a Platba with at least one valid item to be ordered
+		2. on Doprava a platba screen, select "Kurýr po Praze" as a type of shipping - this should be accepted at this point
+		3. proceed further to Dodací údaje screen, fill in any valid data in required fields, plus valid address in Prague
+			3a. this should be accepted and order can be placed when Dokonèit objednávku button is used
+		4. repeat until point 3, but attempt to use address not residing in Prague - address should be accepted by the UI at this point
+			4a. when Dokonèit objednávku is pressed, backend validation should reject the order and inform user by a message
+			4b. verify the message clearly highlights the issue, text should be "Objednávku nelze dokonèit, jelikož zvolený typ dopravy
+			"Kurýr po Praze" není podporován pro Vaši adresu, prosím zvolte jiný."
+	*/
     }
     
 }
